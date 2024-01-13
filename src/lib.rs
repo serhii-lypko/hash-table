@@ -35,8 +35,9 @@ use std::hash::{Hash, Hasher};
 
     - generics ✅
     - resize ✅
-    - delete, keys
-    - collision
+    - delete ✅
+    - into iter
+    - handle collision
 */
 
 const DEFAULT_BUCKET_SIZE: usize = 100;
@@ -97,12 +98,9 @@ where
             .and_then(|kv| if kv.key == key { Some(kv.value) } else { None })
     }
 
-    pub fn delete(&mut self, key: String) {
-        todo!()
-    }
-
-    pub fn keys(&self) {
-        todo!();
+    pub fn delete(&mut self, key: K) {
+        let index = self.create_index(key);
+        self.buckets[index] = None;
     }
 
     fn create_index(&self, key: K) -> usize {
@@ -150,8 +148,23 @@ mod tests {
         assert_eq!(hash_table.get("key3".to_string()), Some(3));
     }
 
+    #[test]
+    fn test_delete() {
+        let mut hash_table: HashTable<String, u64> = HashTable::new(100);
+
+        hash_table.insert("key1".to_string(), 1);
+        hash_table.insert("key2".to_string(), 2);
+        hash_table.insert("key3".to_string(), 3);
+
+        assert_eq!(hash_table.get("key2".to_string()), Some(2));
+
+        hash_table.delete("key2".to_string());
+
+        assert_eq!(hash_table.get("key2".to_string()), None);
+    }
+
     // #[test]
-    // fn test_delete() {
+    // fn test_into_iter() {
     //     todo!()
     // }
 
