@@ -1,4 +1,5 @@
 use std::collections::hash_map::DefaultHasher;
+use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
 /*
@@ -33,9 +34,12 @@ use std::hash::{Hash, Hasher};
     TODO:
 
     - generics ✅
-    - resize
+    - resize ✅
+    - delete, keys
     - collision
 */
+
+const DEFAULT_BUCKET_SIZE: usize = 100;
 
 type Buckets<K, V> = Vec<Option<KV<K, V>>>;
 
@@ -45,18 +49,23 @@ struct KV<K, V> {
     value: V,
 }
 
-struct HashTable<K, V> {
+#[derive(Clone, Debug)]
+struct HashTable<K, V>
+where
+    K: Debug,
+    V: Debug,
+{
     buckets: Buckets<K, V>,
     size: usize,
 }
 
 impl<K, V> HashTable<K, V>
 where
-    K: Clone + Hash + Eq,
-    V: Clone,
+    K: Clone + Hash + Eq + Debug,
+    V: Clone + Debug,
 {
-    pub fn new() -> Self {
-        let buckets: Buckets<K, V> = vec![None; 100];
+    pub fn new(with_capacity: usize) -> Self {
+        let buckets: Buckets<K, V> = vec![None; with_capacity];
 
         HashTable { buckets, size: 0 }
     }
@@ -66,6 +75,10 @@ where
     }
 
     pub fn insert(&mut self, key: K, value: V) {
+        if self.size() + 1 > self.buckets.len() {
+            self.resize();
+        }
+
         let kv = KV {
             key: key.clone(),
             value,
@@ -88,6 +101,10 @@ where
         todo!()
     }
 
+    pub fn keys(&self) {
+        todo!();
+    }
+
     fn create_index(&self, key: K) -> usize {
         let mut s = DefaultHasher::new();
         key.hash(&mut s);
@@ -96,10 +113,17 @@ where
         // Modulo arithmetic -> Uniform Distribution
         (hash % (self.buckets.len() as u64)) as usize
     }
-}
 
-fn main() {
-    let hash_table: HashTable<String, u64> = HashTable::new();
+    fn resize(&mut self) {
+        let old_buckets = self.buckets.clone();
+        self.buckets = vec![None; old_buckets.len() + DEFAULT_BUCKET_SIZE];
+
+        for bucket in old_buckets {
+            if let Some(bucket) = bucket {
+                self.insert(bucket.key, bucket.value);
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -108,13 +132,13 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let hash_table: HashTable<String, u64> = HashTable::new();
+        let hash_table: HashTable<String, u64> = HashTable::new(100);
         assert_eq!(hash_table.size(), 0);
     }
 
     #[test]
     fn test_insert() {
-        let mut hash_table: HashTable<String, u64> = HashTable::new();
+        let mut hash_table: HashTable<String, u64> = HashTable::new(100);
 
         hash_table.insert("key1".to_string(), 1);
         hash_table.insert("key2".to_string(), 2);
@@ -130,4 +154,24 @@ mod tests {
     // fn test_delete() {
     //     todo!()
     // }
+
+    #[test]
+    fn test_resize() {
+        let mut hash_table: HashTable<String, u64> = HashTable::new(3);
+
+        assert_eq!(hash_table.buckets.len(), 3);
+
+        hash_table.insert("key_1".to_string(), 1);
+        hash_table.insert("key_22".to_string(), 2);
+        hash_table.insert("key_33".to_string(), 3);
+
+        hash_table.insert("key_4".to_string(), 4);
+
+        assert_eq!(hash_table.buckets.len(), 103);
+
+        assert_eq!(hash_table.get("key_1".to_string()), Some(1));
+        assert_eq!(hash_table.get("key_22".to_string()), Some(2));
+        assert_eq!(hash_table.get("key_33".to_string()), Some(3));
+        assert_eq!(hash_table.get("key_4".to_string()), Some(4));
+    }
 }
