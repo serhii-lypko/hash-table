@@ -32,27 +32,31 @@ use std::hash::{Hash, Hasher};
 /*
     TODO:
 
-    - generics
+    - generics ✅
     - resize
     - collision
 */
 
-type Buckets = Vec<Option<KV>>;
+type Buckets<K, V> = Vec<Option<KV<K, V>>>;
 
 #[derive(Clone, Debug)]
-struct KV {
-    key: String,
-    value: u64,
+struct KV<K, V> {
+    key: K,
+    value: V,
 }
 
-struct HashTable {
-    buckets: Buckets,
+struct HashTable<K, V> {
+    buckets: Buckets<K, V>,
     size: usize,
 }
 
-impl HashTable {
+impl<K, V> HashTable<K, V>
+where
+    K: Clone + Hash + Eq,
+    V: Clone,
+{
     pub fn new() -> Self {
-        let buckets: Buckets = vec![None; 100];
+        let buckets: Buckets<K, V> = vec![None; 100];
 
         HashTable { buckets, size: 0 }
     }
@@ -61,7 +65,7 @@ impl HashTable {
         self.size
     }
 
-    pub fn insert(&mut self, key: String, value: u64) {
+    pub fn insert(&mut self, key: K, value: V) {
         let kv = KV {
             key: key.clone(),
             value,
@@ -73,7 +77,7 @@ impl HashTable {
         self.size += 1;
     }
 
-    pub fn get(&self, key: String) -> Option<u64> {
+    pub fn get(&self, key: K) -> Option<V> {
         let index = self.create_index(key.clone());
         self.buckets[index]
             .clone()
@@ -84,7 +88,7 @@ impl HashTable {
         todo!()
     }
 
-    fn create_index(&self, key: String) -> usize {
+    fn create_index(&self, key: K) -> usize {
         let mut s = DefaultHasher::new();
         key.hash(&mut s);
         let hash = s.finish();
@@ -95,7 +99,7 @@ impl HashTable {
 }
 
 fn main() {
-    let hash_table = HashTable::new();
+    let hash_table: HashTable<String, u64> = HashTable::new();
 }
 
 #[cfg(test)]
@@ -104,13 +108,13 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let hash_table = HashTable::new();
+        let hash_table: HashTable<String, u64> = HashTable::new();
         assert_eq!(hash_table.size(), 0);
     }
 
     #[test]
     fn test_insert() {
-        let mut hash_table = HashTable::new();
+        let mut hash_table: HashTable<String, u64> = HashTable::new();
 
         hash_table.insert("key1".to_string(), 1);
         hash_table.insert("key2".to_string(), 2);
