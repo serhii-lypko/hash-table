@@ -29,16 +29,20 @@ use std::hash::{Hash, Hasher};
     all the current keys into it.
 */
 
-// TODO: handle collision?
+/*
+    TODO:
 
-// TODO: handle resize
+    - generics
+    - resize
+    - collision
+*/
 
 type Buckets = Vec<Option<KV>>;
 
 #[derive(Clone, Debug)]
 struct KV {
     key: String,
-    value: u64, // TODO: generic
+    value: u64,
 }
 
 struct HashTable {
@@ -48,7 +52,7 @@ struct HashTable {
 
 impl HashTable {
     pub fn new() -> Self {
-        let buckets: Buckets = vec![None; 100]; // NOTE: init size?
+        let buckets: Buckets = vec![None; 100];
 
         HashTable { buckets, size: 0 }
     }
@@ -70,14 +74,10 @@ impl HashTable {
     }
 
     pub fn get(&self, key: String) -> Option<u64> {
-        let index = self.create_index(key);
-        let kv = self.buckets[index].clone();
-
-        // TODO: check if keys are equal
-
-        // self.buckets[index].clone().map(|kv| kv.value)
-
-        todo!()
+        let index = self.create_index(key.clone());
+        self.buckets[index]
+            .clone()
+            .and_then(|kv| if kv.key == key { Some(kv.value) } else { None })
     }
 
     pub fn delete(&mut self, key: String) {
@@ -89,7 +89,7 @@ impl HashTable {
         key.hash(&mut s);
         let hash = s.finish();
 
-        // Modulo arithmetic -> Uniform Distribution + Efficiency
+        // Modulo arithmetic -> Uniform Distribution
         (hash % (self.buckets.len() as u64)) as usize
     }
 }
@@ -122,8 +122,8 @@ mod tests {
         assert_eq!(hash_table.get("key3".to_string()), Some(3));
     }
 
-    #[test]
-    fn test_delete() {
-        todo!()
-    }
+    // #[test]
+    // fn test_delete() {
+    //     todo!()
+    // }
 }
