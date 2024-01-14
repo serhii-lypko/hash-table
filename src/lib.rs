@@ -3,46 +3,19 @@ use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
 /*
-    Hash Function: The hash table uses a hash function to convert the key into a hash code,
-    which is usually an integer. The hash code is then converted to an index into the array.
-    The hash function is designed to ensure that different keys map to different indexes.
-    However, in some cases, two different keys might produce the same hash code, leading to a collision.
-
-    Handling Collisions: There are several methods for handling collisions. Two of the most common
-    are separate chaining and open addressing. In separate chaining, each bucket is independent,
-    and contains a list of entries for each index. If a collision occurs, the entry is just added
-    to the list at that index. In open addressing, if a collision occurs, we find the next available
-    slot or bucket.
-
-    Insertion: When inserting a new key-value pair, the hash table first applies the hash function
-    to the key and gets the hash code. It then converts this hash code into an index and stores
-    the key-value pair in the bucket at that index.
-
-    Lookup: When looking up a key, the hash table does the same thing: it applies the hash function,
-    converts the hash code to an index, and searches the bucket at that index for the key.
-    If the key is found, its corresponding value is returned.
-
-    Deletion: Deletion is similar to lookup. The hash table applies the hash function to the key,
-    converts the hash code to an index, and removes the key-value pair from the bucket at that index.
-
-    Resizing: If the hash table becomes too full (i.e., the load factor is too high), it needs to be
-    resized to maintain performance. Resizing involves creating a new, larger array and rehashing
-    all the current keys into it.
-*/
-
-/*
     TODO:
 
     - generics ✅
     - resize ✅
     - delete ✅
-    - into iter
+    - impl iter
     - handle collision
 */
 
 const DEFAULT_BUCKET_SIZE: usize = 100;
 
-type Buckets<K, V> = Vec<Option<KV<K, V>>>;
+type Bucket<K, V> = Option<KV<K, V>>;
+type Buckets<K, V> = Vec<Bucket<K, V>>;
 
 #[derive(Clone, Debug)]
 struct KV<K, V> {
@@ -124,6 +97,18 @@ where
     }
 }
 
+impl<K, V> Iterator for HashTable<K, V>
+where
+    K: Clone + Hash + Eq + Debug,
+    V: Clone + Debug,
+{
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -163,10 +148,16 @@ mod tests {
         assert_eq!(hash_table.get("key2".to_string()), None);
     }
 
-    // #[test]
-    // fn test_into_iter() {
-    //     todo!()
-    // }
+    #[test]
+    fn test_iterator() {
+        let mut hash_table = HashTable::new(10);
+        hash_table.insert("key_1".to_string(), "value1".to_string());
+        hash_table.insert("key_2".to_string(), "value2".to_string());
+
+        let iter = hash_table.clone().into_iter();
+
+        todo!()
+    }
 
     #[test]
     fn test_resize() {
